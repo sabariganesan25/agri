@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: agriscan-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt && apt-get update && apt-get install -y libgl1-mesa-glx" # Required for OpenCV
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # Must be provided by user in Render Dashboard

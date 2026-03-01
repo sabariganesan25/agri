@@ -35,8 +35,9 @@ function App() {
       if (!isMounted) return;
 
       try {
-        // Connect to FastAPI backend
-        ws = new WebSocket('ws://localhost:8000/ws/stream');
+        // Use environment variable for WebSocket URL, fallback to localhost for local dev
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/stream';
+        ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
           if (!isMounted) {
