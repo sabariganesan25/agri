@@ -39,10 +39,13 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
 
   useEffect(() => {
     startCamera();
+
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(track => track.stop());
+      // Store ref value to ensure cleanup accesses the correct moment in time
+      const videoElement = videoRef.current;
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -62,7 +65,8 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
             if (ctx) {
               ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
               // Send JPEG base64 to backend
-              const base64 = canvas.toDataURL('image/jpeg', 0.6);
+              // Default to a 0.5 quality to save WebSocket bandwidth on Vercel/Render
+              const base64 = canvas.toDataURL('image/jpeg', 0.5);
               onFrame(base64);
             }
           }
