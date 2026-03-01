@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import base64
 import time
+import gc
 from ultralytics import YOLO
 from classes import CLASS_METADATA, CLASS_NAMES
 
@@ -19,9 +20,13 @@ class VideoProcessor:
 
     def process_frame(self, base64_frame):
         # Decode base64 frame
-        img_data = base64.b64decode(base64_frame.split(',')[1] if ',' in base64_frame else base64_frame)
-        np_arr = np.frombuffer(img_data, np.uint8)
-        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        try:
+            img_data = base64.b64decode(base64_frame.split(',')[1] if ',' in base64_frame else base64_frame)
+            np_arr = np.frombuffer(img_data, np.uint8)
+            frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        except Exception as e:
+            print(f"Decode error: {e}")
+            return None, []
 
         if frame is None:
             return None, []
@@ -90,7 +95,8 @@ class VideoProcessor:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         # Encode frame back to base64
-        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        # Lower quality to 60 for better performance on slow networks (Render)
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
         encoded_img = base64.b64encode(buffer).decode('utf-8')
         
         # Determine if we should trigger LLM
@@ -101,5 +107,9 @@ class VideoProcessor:
         if len(detected_diseases) > 0 and (current_time - self.last_llm_call) > self.llm_cooldown:
             trigger_llm = True
             self.last_llm_call = current_time
+
+        # Manual garbage collection to keep Render RAM usage low
+        if self.frame_count % 10 == 0:
+            gc.collect()
 
         return f"data:image/jpeg;base64,{encoded_img}", self.last_results, trigger_llm, list(detected_diseases)

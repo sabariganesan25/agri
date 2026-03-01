@@ -23,8 +23,10 @@ function App() {
   const [detections, setDetections] = useState<Detection[]>([]);
   const [advisory, setAdvisory] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [stats, setStats] = useState({ sent: 0, received: 0, lastLatency: 0 });
 
   const wsRef = useRef<WebSocket | null>(null);
+  const lastFrameTime = useRef<number>(0);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -56,6 +58,11 @@ function App() {
 
             if (data.frame) {
               setAnnotatedFrame(data.frame);
+              setStats(prev => ({
+                ...prev,
+                received: prev.received + 1,
+                lastLatency: Date.now() - lastFrameTime.current
+              }));
             }
             if (data.detections) {
               setDetections(data.detections);
@@ -109,10 +116,12 @@ function App() {
   // Handle outgoing frames
   const handleFrame = useCallback((base64: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      lastFrameTime.current = Date.now();
       wsRef.current.send(JSON.stringify({
         frame: base64,
         language: language
       }));
+      setStats(prev => ({ ...prev, sent: prev.sent + 1 }));
     }
   }, [language]);
 
@@ -142,6 +151,7 @@ function App() {
           annotatedFrame={annotatedFrame}
           isHighRisk={isHighRisk}
           connectionError={connectionError}
+          stats={stats}
         />
 
         <AdvisoryPanel

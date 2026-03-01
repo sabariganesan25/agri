@@ -6,9 +6,10 @@ interface LiveStreamProps {
   annotatedFrame: string | null;
   isHighRisk: boolean;
   connectionError?: string | null;
+  stats: { sent: number; received: number; lastLatency: number };
 }
 
-export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk, connectionError }) => {
+export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk, connectionError, stats }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streamActive, setStreamActive] = useState(false);
@@ -68,8 +69,13 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
           // Only draw if video is actually playing, has dimensions, and is ready
           if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
             if (!videoReady) setVideoReady(true);
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+
+            // Performance Optimization: Shrink frame for cloud processing
+            const maxDimension = 640;
+            const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
+
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -127,6 +133,25 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
 
         {/* High Risk Alert Flash */}
         {isHighRisk && <div className="alert-flash"></div>}
+
+        {/* Debug Telemetry Overlay */}
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'rgba(0,0,0,0.7)',
+          color: '#00ff00',
+          padding: '5px 10px',
+          borderRadius: '4px',
+          fontSize: '10px',
+          fontFamily: 'monospace',
+          zIndex: 10,
+          pointerEvents: 'none'
+        }}>
+          <div>SNT: {stats.sent} | RCV: {stats.received}</div>
+          <div>LAT: {stats.lastLatency}ms</div>
+          <div>NET: {annotatedFrame ? "STABLE" : "LOADING"}</div>
+        </div>
       </div>
 
       <div className="controls-row">
