@@ -23,7 +23,7 @@ function App() {
   const [detections, setDetections] = useState<Detection[]>([]);
   const [advisory, setAdvisory] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [stats, setStats] = useState({ sent: 0, received: 0, lastLatency: 0 });
+  const [stats, setStats] = useState({ sent: 0, received: 0, lastLatency: 0, status: 'WAITING' });
 
   const wsRef = useRef<WebSocket | null>(null);
   const lastFrameTime = useRef<number>(0);
@@ -56,6 +56,16 @@ function App() {
           try {
             const data = JSON.parse(event.data);
 
+            if (data.status === "ready") {
+              setStats(prev => ({ ...prev, status: 'CONNECTED' }));
+              return;
+            }
+
+            if (data.type === "pong") {
+              // Heartbeat received
+              return;
+            }
+
             if (data.frame) {
               setAnnotatedFrame(data.frame);
               setStats(prev => ({
@@ -83,6 +93,7 @@ function App() {
         ws.onclose = (event) => {
           if (isMounted) {
             console.log(`WebSocket Disconnected (Code: ${event.code}). Reconnecting in 3s...`);
+            setStats(prev => ({ ...prev, status: 'DISCONNECTED' }));
             clearTimeout(reconnectTimeout);
             reconnectTimeout = setTimeout(connect, 3000);
           }
@@ -99,11 +110,19 @@ function App() {
       }
     };
 
+    // Heartbeat ping to keep connection alive
+    const pingInterval = setInterval(() => {
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 5000);
+
     // Slight delay before first connection to allow browser to settle
     reconnectTimeout = setTimeout(connect, 500);
 
     return () => {
       isMounted = false;
+      clearInterval(pingInterval);
       clearTimeout(reconnectTimeout);
       if (ws) {
         // Prevent onclose handle from firing a reconnect

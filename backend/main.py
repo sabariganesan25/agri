@@ -51,6 +51,10 @@ def get_llm_advisory(diseases, language="English"):
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    print("WebSocket connection established")
+    
+    # Send an initial message to confirm backend is ready
+    await websocket.send_json({"status": "ready", "message": "Backend AI Engine Connected"})
     
     language = "English"
 
@@ -60,6 +64,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 data = await websocket.receive_text()
                 payload = json.loads(data)
                 
+                # Check for ping
+                if payload.get("type") == "ping":
+                    await websocket.send_json({"type": "pong"})
+                    continue
+
                 if "language" in payload:
                     language = payload["language"]
                     
@@ -99,6 +108,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 print(f"Skipping bad frame or internal error: {e}")
                 # Don't break, just skip the frame and continue
 
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
     except Exception as e:
         print(f"WebSocket Setup Error: {e}")
 

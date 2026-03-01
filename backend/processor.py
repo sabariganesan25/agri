@@ -32,13 +32,17 @@ class VideoProcessor:
             return None, []
 
         orig_h, orig_w = frame.shape[:2]
+        # print(f"Processing frame {self.frame_count}: {orig_w}x{orig_h}")
         
         self.frame_count += 1
         
         # Run inference every N frames
         if self.frame_count % self.skip_frames == 0 or not self.last_results:
             # Let YOLO handle native letterbox resizing instead of manual squashing
+            # print("Running YOLO Inference...")
+            start_t = time.time()
             results = self.model(frame, conf=0.42, iou=0.45, verbose=False)
+            # print(f"Inference took: {time.time() - start_t:.3f}s")
             
             boxes = results[0].boxes
             

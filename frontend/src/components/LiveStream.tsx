@@ -6,7 +6,7 @@ interface LiveStreamProps {
   annotatedFrame: string | null;
   isHighRisk: boolean;
   connectionError?: string | null;
-  stats: { sent: number; received: number; lastLatency: number };
+  stats: { sent: number; received: number; lastLatency: number; status: string };
 }
 
 export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk, connectionError, stats }) => {
@@ -140,17 +140,19 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
           top: '10px',
           right: '10px',
           background: 'rgba(0,0,0,0.7)',
-          color: '#00ff00',
+          color: stats.status === 'CONNECTED' ? '#00ff00' : '#ffff00',
           padding: '5px 10px',
           borderRadius: '4px',
           fontSize: '10px',
           fontFamily: 'monospace',
           zIndex: 10,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          lineHeight: '1.4'
         }}>
+          <div>STATUS: {stats.status}</div>
           <div>SNT: {stats.sent} | RCV: {stats.received}</div>
           <div>LAT: {stats.lastLatency}ms</div>
-          <div>NET: {annotatedFrame ? "STABLE" : "LOADING"}</div>
+          <div>{annotatedFrame ? "AI ACTIVE" : "WAITING..."}</div>
         </div>
       </div>
 
