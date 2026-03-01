@@ -24,6 +24,7 @@ function App() {
   const [advisory, setAdvisory] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [stats, setStats] = useState({ sent: 0, received: 0, lastLatency: 0, status: 'WAITING' });
+  const [lastDebug, setLastDebug] = useState<string>('Initializing...');
 
   const wsRef = useRef<WebSocket | null>(null);
   const lastFrameTime = useRef<number>(0);
@@ -55,6 +56,10 @@ function App() {
           if (!isMounted) return;
           try {
             const data = JSON.parse(event.data);
+
+            if (data.debug) {
+              setLastDebug(data.debug);
+            }
 
             if (data.status === "ready") {
               setStats(prev => ({ ...prev, status: 'CONNECTED' }));
@@ -171,6 +176,7 @@ function App() {
           isHighRisk={isHighRisk}
           connectionError={connectionError}
           stats={stats}
+          debug={lastDebug}
         />
 
         <AdvisoryPanel

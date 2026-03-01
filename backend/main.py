@@ -94,19 +94,22 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     response_payload = {
                         "frame": processed_frame,
-                        "detections": detections
+                        "detections": detections,
+                        "debug": f"Processed frame in {self.processor.frame_count}" if hasattr(self, 'processor') else "Analysis complete"
                     }
                     
                     if advisory_text:
                         response_payload["advisory"] = advisory_text
                     
                     await websocket.send_json(response_payload)
+                else:
+                    await websocket.send_json({"debug": "Frame ignored by processor (skip_frames or empty)"})
             except WebSocketDisconnect:
                 print("Client disconnected gracefully.")
                 break
             except Exception as e:
                 print(f"Skipping bad frame or internal error: {e}")
-                # Don't break, just skip the frame and continue
+                await websocket.send_json({"debug": f"error: {str(e)}"})
 
     except WebSocketDisconnect:
         print("WebSocket disconnected")

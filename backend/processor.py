@@ -37,11 +37,12 @@ class VideoProcessor:
         self.frame_count += 1
         
         # Run inference every N frames
-        if self.frame_count % self.skip_frames == 0 or not self.last_results:
+        if self.frame_count % self.skip_frames == 0:
+            # Optimization: Use imgsz=320 to massively reduce RAM and latency on Render Free Tier
             # Let YOLO handle native letterbox resizing instead of manual squashing
             # print("Running YOLO Inference...")
             start_t = time.time()
-            results = self.model(frame, conf=0.42, iou=0.45, verbose=False)
+            results = self.model(frame, conf=0.35, iou=0.45, verbose=False, imgsz=320)
             # print(f"Inference took: {time.time() - start_t:.3f}s")
             
             boxes = results[0].boxes

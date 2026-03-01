@@ -7,9 +7,10 @@ interface LiveStreamProps {
   isHighRisk: boolean;
   connectionError?: string | null;
   stats: { sent: number; received: number; lastLatency: number; status: string };
+  debug?: string;
 }
 
-export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk, connectionError, stats }) => {
+export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk, connectionError, stats, debug }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streamActive, setStreamActive] = useState(false);
@@ -152,7 +153,7 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
           <div>STATUS: {stats.status}</div>
           <div>SNT: {stats.sent} | RCV: {stats.received}</div>
           <div>LAT: {stats.lastLatency}ms</div>
-          <div>{annotatedFrame ? "AI ACTIVE" : "WAITING..."}</div>
+          <div style={{ color: '#fff' }}>MSG: {debug || 'None'}</div>
         </div>
       </div>
 
