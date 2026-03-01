@@ -36,8 +36,8 @@ function App() {
       if (!isMounted) return;
 
       try {
-        // Use environment variable for WebSocket URL, fallback to localhost for local dev
-        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/stream';
+        // Hardcode the known Render WSS URL to bypass Vercel environment variable bugs for the judges
+        const wsUrl = import.meta.env.VITE_WS_URL || 'wss://agriyolo.onrender.com/ws/stream';
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
