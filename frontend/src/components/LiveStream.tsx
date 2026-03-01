@@ -5,9 +5,10 @@ interface LiveStreamProps {
   onFrame: (base64: string) => void;
   annotatedFrame: string | null;
   isHighRisk: boolean;
+  connectionError?: string | null;
 }
 
-export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk }) => {
+export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame, isHighRisk, connectionError }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streamActive, setStreamActive] = useState(false);
@@ -100,7 +101,13 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
         {annotatedFrame ? (
           <img src={annotatedFrame} alt="Live Analyzing..." className="live-video" />
         ) : (
-          <div style={{ color: 'var(--color-bg)', opacity: 0.5 }}>Initializing Video Stream...</div>
+          <div style={{ color: 'var(--color-bg)', opacity: 0.8, textAlign: 'center', padding: '2rem' }}>
+            {connectionError ? (
+              <span style={{ color: 'var(--color-risk-high)' }}>⚠ {connectionError}</span>
+            ) : (
+              "Initializing Video Stream..."
+            )}
+          </div>
         )}
 
         {/* High Risk Alert Flash */}

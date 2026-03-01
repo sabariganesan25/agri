@@ -22,6 +22,7 @@ function App() {
   const [annotatedFrame, setAnnotatedFrame] = useState<string | null>(null);
   const [detections, setDetections] = useState<Detection[]>([]);
   const [advisory, setAdvisory] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -45,6 +46,7 @@ function App() {
             return;
           }
           console.log("WebSocket Connected");
+          setConnectionError(null);
         };
 
         ws.onmessage = (event) => {
@@ -80,7 +82,8 @@ function App() {
         };
 
         ws.onerror = (error) => {
-          console.error("WebSocket Error - Check if backend is running at localhost:8000", error);
+          console.error("WebSocket Error - Check if backend is running", error);
+          setConnectionError(`Connection failed: Cannot reach backend at ${wsUrl}`);
         };
 
         wsRef.current = ws;
@@ -138,6 +141,7 @@ function App() {
           onFrame={handleFrame}
           annotatedFrame={annotatedFrame}
           isHighRisk={isHighRisk}
+          connectionError={connectionError}
         />
 
         <AdvisoryPanel
