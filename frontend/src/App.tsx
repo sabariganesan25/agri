@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Leaf } from 'lucide-react';
 import { LiveStream } from './components/LiveStream';
 import { AdvisoryPanel } from './components/AdvisoryPanel';

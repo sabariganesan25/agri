@@ -1,4 +1,3 @@
-import React from 'react';
 import { Volume2, AlertTriangle, Info } from 'lucide-react';
 
 interface Detection {
