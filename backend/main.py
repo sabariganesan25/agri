@@ -19,6 +19,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "service": "AgriScan AI Engine",
+        "version": "1.2.0",
+        "endpoints": ["/ws/stream", "/health"]
+    }
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "timestamp": time.time()}
+
 # Initialize processor globally
 processor = VideoProcessor("model/agridrone_best.pt")
 
