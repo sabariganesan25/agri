@@ -12,6 +12,7 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streamActive, setStreamActive] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const startCamera = async () => {
     try {
@@ -20,7 +21,11 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setStreamActive(true);
+        // Explicitly call play to ensure browser doesn't throttle background video
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => console.error("Play failed:", e));
+          setStreamActive(true);
+        };
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
@@ -29,7 +34,10 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setStreamActive(true);
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(e => console.error("Play failed:", e));
+            setStreamActive(true);
+          };
         }
       } catch (e) {
         console.error("Fallback camera failed:", e);
@@ -59,6 +67,7 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
           const canvas = canvasRef.current;
           // Only draw if video is actually playing, has dimensions, and is ready
           if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+            if (!videoReady) setVideoReady(true);
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
@@ -92,13 +101,13 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
         {/* Hidden canvas for extraction and hidden video for capturing */}
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-        {/* Local Video Stream (Hidden visually, used only for capture) */}
+        {/* Local Video Stream (Visible at 0.02 opacity to prevent browser background throttling) */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '100%', height: '100%' }}
+          style={{ position: 'absolute', opacity: 0.02, pointerEvents: 'none', width: '100%', height: '100%' }}
         />
 
         {/* Annotated Overlay from YOLO Processed Frame (Main Display) */}
@@ -108,6 +117,8 @@ export const LiveStream: React.FC<LiveStreamProps> = ({ onFrame, annotatedFrame,
           <div style={{ color: 'var(--color-bg)', opacity: 0.8, textAlign: 'center', padding: '2rem' }}>
             {connectionError ? (
               <span style={{ color: 'var(--color-risk-high)' }}>⚠ {connectionError}</span>
+            ) : videoReady ? (
+              "Waiting for AI Analysis..."
             ) : (
               "Initializing Video Stream..."
             )}
